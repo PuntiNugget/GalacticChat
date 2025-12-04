@@ -16,18 +16,16 @@ app.get('/', (req, res) => {
 const users = {};
 const bannedIPs = new Set();
 const bannedUsernames = new Set();
-let bannedWords = ['spam', 'virus']; // Example filtered words
+let bannedWords = ['spam', 'virus']; 
 
-// Helper: Get Client IP
 function getIp(socket) {
-    // Check for proxy headers first (common in hosting), then fall back to connection address
     return socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
 }
 
 io.on('connection', (socket) => {
   const clientIp = getIp(socket);
 
-  // 1. SECURITY CHECK: IP BAN
+  // 1. IP BAN CHECK
   if (bannedIPs.has(clientIp)) {
       socket.emit('banAlert', 'CONNECTION TERMINATED: TERMINAL BLACKLISTED.');
       socket.disconnect(true);
@@ -40,7 +38,7 @@ io.on('connection', (socket) => {
   socket.on('join', (data) => {
     let role = 'User';
 
-    // 2. SECURITY CHECK: USERNAME BAN
+    // 2. USERNAME BAN CHECK
     if (bannedUsernames.has(data.name.toLowerCase())) {
         socket.emit('loginError', 'ACCESS DENIED: IDENTITY BLACKLISTED.');
         return;
@@ -58,7 +56,8 @@ io.on('connection', (socket) => {
         id: socket.id,
         name: data.name || `Cadet-${socket.id.substr(0,4)}`,
         role: role,
-        ip: clientIp
+        ip: clientIp,
+        status: 'In Comms' // Default status upon joining
     };
 
     socket.emit('loginSuccess', {
@@ -72,7 +71,6 @@ io.on('connection', (socket) => {
         timestamp: new Date().toLocaleTimeString()
     });
 
-    // Send updated user list for Admin dropdowns
     io.emit('userList', Object.values(users));
   });
 
@@ -80,11 +78,8 @@ io.on('connection', (socket) => {
   socket.on('chatMessage', (msg) => {
     const user = users[socket.id];
     if (user) {
-        // 3. WORD FILTER
         let filteredText = msg;
         bannedWords.forEach(word => {
-            // Case-insensitive regex to replace whole words
-            // Escape special regex chars in the word just in case
             const safeWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`\\b${safeWord}\\b`, 'gi');
             filteredText = filteredText.replace(regex, '[REDACTED]');
@@ -99,34 +94,33 @@ io.on('connection', (socket) => {
     }
   });
 
-  // --- ADMIN COMMANDS ---
+  // Handle Status Updates (User switching tabs)
+  socket.on('updateStatus', (newStatus) => {
+      if (users[socket.id]) {
+          users[socket.id].status = newStatus;
+          // Broadcast new list so sidebar updates for everyone
+          io.emit('userList', Object.values(users));
+      }
+  });
+
+  // Admin Actions
   socket.on('adminAction', (action) => {
       const adminUser = users[socket.id];
-      // Strict Role Check
-      if (!adminUser || (adminUser.role !== 'Admin' && adminUser.role !== 'Owner')) {
-          return; // Ignore unauthorized requests
-      }
+      if (!adminUser || (adminUser.role !== 'Admin' && adminUser.role !== 'Owner')) return;
 
       switch(action.type) {
           case 'ban_user':
-              // Find target by name
               const targetId = Object.keys(users).find(id => users[id].name === action.targetName);
               if (targetId) {
                   const targetUser = users[targetId];
-                  
-                  // Add to Blacklists
                   bannedUsernames.add(targetUser.name.toLowerCase());
                   bannedIPs.add(targetUser.ip);
-
-                  // Public Shaming Message
                   io.emit('message', {
                       user: 'SYSTEM',
                       text: `JUDGMENT: ${targetUser.name} has been exiled by ${adminUser.name}.`,
                       role: 'System',
                       timestamp: new Date().toLocaleTimeString()
                   });
-
-                  // Kick the user
                   const targetSocket = io.sockets.sockets.get(targetId);
                   if (targetSocket) {
                       targetSocket.emit('banAlert', 'YOU HAVE BEEN BANNED BY ADMINISTRATOR.');
@@ -154,7 +148,6 @@ io.on('connection', (socket) => {
               });
               break;
       }
-      
       io.emit('userList', Object.values(users));
   });
 
