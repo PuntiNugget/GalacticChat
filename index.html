@@ -27,18 +27,11 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-            pointer-events: none; /* Let clicks pass through */
+            pointer-events: none;
         }
         
-        .star-dot {
-            fill: #00ffff;
-            transition: fill 0.3s;
-        }
-        
-        .constellation-line {
-            stroke: rgba(0, 255, 255, 0.4);
-            stroke-width: 1;
-        }
+        .star-dot { fill: #00ffff; }
+        .constellation-line { stroke: rgba(0, 255, 255, 0.4); stroke-width: 1; }
 
         /* --- Layout --- */
         #app-container {
@@ -51,8 +44,8 @@
             width: 100%;
         }
 
-        /* --- Login Modal --- */
-        #login-modal {
+        /* --- Modals & Overlays --- */
+        .modal {
             background: rgba(10, 10, 15, 0.95);
             border: 2px solid #00ffff;
             padding: 2rem;
@@ -65,26 +58,46 @@
             width: 300px;
         }
 
-        h2 {
-            font-family: 'Orbitron', sans-serif;
-            color: #00ffff;
-            margin-top: 0;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        #announcement-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            animation: flashRed 0.5s;
         }
 
-        input {
+        @keyframes flashRed {
+            0% { background: rgba(255, 0, 0, 0.5); }
+            100% { background: rgba(0, 0, 0, 0.9); }
+        }
+
+        #announcement-box {
+            border: 2px solid #ff4444;
+            padding: 30px;
+            background: #110000;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        h2 { font-family: 'Orbitron', sans-serif; color: #00ffff; margin-top: 0; text-transform: uppercase; letter-spacing: 2px; }
+        h3.alert-title { color: #ff4444; font-size: 2rem; margin: 0 0 20px 0; }
+        p.alert-text { font-size: 1.5rem; color: white; margin-bottom: 20px; }
+
+        input, select {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid #444;
             color: white;
             padding: 10px;
             font-family: 'Roboto Mono', monospace;
             outline: none;
+            width: 100%;
+            box-sizing: border-box;
         }
-
-        input:focus {
-            border-color: #00ffff;
-        }
+        input:focus, select:focus { border-color: #00ffff; }
 
         button {
             background: transparent;
@@ -96,168 +109,88 @@
             text-transform: uppercase;
             transition: all 0.3s;
         }
+        button:hover { background: #00ffff; color: black; box-shadow: 0 0 15px #00ffff; }
+        
+        button.danger-btn { border-color: #ff4444; color: #ff4444; }
+        button.danger-btn:hover { background: #ff4444; color: black; box-shadow: 0 0 15px #ff4444; }
 
-        button:hover {
-            background: #00ffff;
-            color: black;
-            box-shadow: 0 0 15px #00ffff;
-        }
+        button.warn-btn { border-color: #ffaa00; color: #ffaa00; }
+        button.warn-btn:hover { background: #ffaa00; color: black; box-shadow: 0 0 15px #ffaa00; }
 
         /* --- Main Interface --- */
         #main-interface {
-            display: none; /* Hidden until login */
+            display: none;
             width: 90%;
             height: 90%;
             flex-direction: column;
             border: 1px solid rgba(0, 255, 255, 0.3);
-            background: rgba(0, 0, 0, 0.85); /* Transparent black background */
+            background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(5px);
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
             position: relative;
         }
 
         /* --- Header / Nav --- */
-        .nav-bar {
-            display: flex;
-            background: rgba(0, 255, 255, 0.1);
-            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-        }
-
-        .nav-tab {
-            padding: 15px 25px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            color: #888;
-            border-right: 1px solid rgba(0, 255, 255, 0.1);
-        }
-
-        .nav-tab.active {
-            background: rgba(0, 255, 255, 0.2);
-            color: #fff;
-            text-shadow: 0 0 5px #00ffff;
-        }
-
-        /* --- Chat Area --- */
-        #chat-view {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        #messages-container {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .message-row {
-            display: flex;
-            flex-direction: column;
-            max-width: 80%;
-        }
-
-        .message-row.mine {
-            align-self: flex-end;
-            align-items: flex-end;
-        }
-
-        .message-row.theirs {
-            align-self: flex-start;
-            align-items: flex-start;
-        }
-
-        .msg-meta {
-            font-size: 0.75rem;
-            margin-bottom: 4px;
-            opacity: 0.8;
-        }
-
-        /* Bubble Style */
-        .msg-bubble {
-            background-color: #808080; /* Solid Grey as requested */
-            color: #fff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            position: relative;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            word-wrap: break-word;
-        }
+        .nav-bar { display: flex; background: rgba(0, 255, 255, 0.1); border-bottom: 1px solid rgba(0, 255, 255, 0.2); }
+        .nav-tab { padding: 15px 25px; cursor: pointer; font-family: 'Orbitron', sans-serif; color: #888; border-right: 1px solid rgba(0, 255, 255, 0.1); }
+        .nav-tab.active { background: rgba(0, 255, 255, 0.2); color: #fff; text-shadow: 0 0 5px #00ffff; }
         
-        /* Role Colors for Meta Text */
+        /* Admin Tab Styling */
+        #admin-tab { display: none; color: #ff4444; border-right: 1px solid #ff4444; }
+        #admin-tab.active { background: rgba(255, 0, 0, 0.2); color: #fff; text-shadow: 0 0 5px #ff0000; }
+
+        /* --- Content Views --- */
+        .view-section { flex: 1; display: none; overflow: hidden; }
+        .view-section.active { display: flex; }
+
+        /* Chat View */
+        #chat-view { flex-direction: column; }
+        #messages-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message-row { display: flex; flex-direction: column; max-width: 80%; }
+        .message-row.mine { align-self: flex-end; align-items: flex-end; }
+        .message-row.theirs { align-self: flex-start; align-items: flex-start; }
+        .msg-meta { font-size: 0.75rem; margin-bottom: 4px; opacity: 0.8; }
+        .msg-bubble { background-color: #808080; color: #fff; padding: 10px 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); word-wrap: break-word; }
         .role-Owner { color: #ffd700; text-shadow: 0 0 5px #ffd700; }
         .role-Admin { color: #ff4444; text-shadow: 0 0 5px #ff0000; }
         .role-User { color: #00ffff; }
         .role-System { color: #00ff00; font-style: italic; }
+        .input-area { padding: 20px; background: rgba(0, 0, 0, 0.5); display: flex; gap: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .input-area input { flex: 1; }
 
-        .input-area {
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        /* Hub View */
+        #hub-view { justify-content: center; align-items: center; flex-direction: column; background: rgba(20, 0, 0, 0.5); }
+        .construction-text { font-family: 'Orbitron'; font-size: 2rem; color: #ffaa00; border: 2px dashed #ffaa00; padding: 2rem; animation: pulse 2s infinite; }
+        .spaceship-icon { font-size: 4rem; filter: drop-shadow(0 0 10px cyan); animation: floatShip 3s ease-in-out infinite; margin-top: 20px; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        @keyframes floatShip { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
-        .input-area input {
-            flex: 1;
-        }
-
-        /* --- Hub View --- */
-        #hub-view {
-            display: none;
-            flex: 1;
-            position: relative;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            background: rgba(20, 0, 0, 0.5);
-        }
-
-        .construction-text {
-            font-family: 'Orbitron';
-            font-size: 2rem;
-            color: #ffaa00;
-            border: 2px dashed #ffaa00;
-            padding: 2rem;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
-        }
-
-        .spaceship-icon {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            font-size: 4rem;
-            filter: drop-shadow(0 0 10px cyan);
-            animation: floatShip 3s ease-in-out infinite;
-        }
-
-        @keyframes floatShip {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
+        /* Admin View */
+        #admin-view { padding: 20px; flex-direction: column; gap: 20px; overflow-y: auto; }
+        .admin-panel-card { background: rgba(0,0,0,0.5); border: 1px solid #ff4444; padding: 20px; border-radius: 5px; }
+        .admin-header { color: #ff4444; font-family: 'Orbitron'; border-bottom: 1px solid #ff4444; padding-bottom: 10px; margin-bottom: 15px; display: block; }
+        .control-group { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; }
 
     </style>
 </head>
 <body>
 
-    <!-- SVG Background Layer (No Canvas) -->
-    <svg id="space-network">
-        <!-- Content generated by JS -->
-    </svg>
+    <svg id="space-network"></svg>
+
+    <!-- Announcement Overlay -->
+    <div id="announcement-overlay">
+        <div id="announcement-box">
+            <h3 class="alert-title">⚠ IMPORTANT ANNOUNCEMENT ⚠</h3>
+            <p id="announce-text" class="alert-text">...</p>
+            <p id="announce-sender" style="color: #888; font-size: 0.9rem;"></p>
+            <button onclick="document.getElementById('announcement-overlay').style.display='none'">ACKNOWLEDGE</button>
+        </div>
+    </div>
 
     <div id="app-container">
         
         <!-- Login Screen -->
-        <div id="login-modal">
+        <div id="login-modal" class="modal">
             <h2>Galactic Link</h2>
             <input type="text" id="username-input" placeholder="Enter Designation (Name)" maxlength="15">
             <input type="password" id="password-input" placeholder="Access Code (Optional)">
@@ -265,6 +198,7 @@
             <div style="font-size: 0.7rem; color: #666; margin-top: 10px;">
                 User: (Empty) | Admin: admin123 | Owner: owner999
             </div>
+            <div id="login-error" style="color: red; font-size: 0.8rem; display: none;"></div>
         </div>
 
         <!-- Main Interface -->
@@ -273,11 +207,12 @@
             <div class="nav-bar">
                 <div class="nav-tab active" onclick="switchTab('chat')">Live Comms</div>
                 <div class="nav-tab" onclick="switchTab('hub')">Deep Space Hub</div>
+                <div class="nav-tab" id="admin-tab" onclick="switchTab('admin')">COMMAND DECK</div>
                 <div style="margin-left: auto; padding: 15px; color: #00ffff; font-size: 0.8rem;" id="user-status"></div>
             </div>
 
             <!-- Chat View -->
-            <div id="chat-view">
+            <div id="chat-view" class="view-section active">
                 <div id="messages-container"></div>
                 <div class="input-area">
                     <input type="text" id="msg-input" placeholder="Transmit message...">
@@ -286,9 +221,43 @@
             </div>
 
             <!-- Hub View -->
-            <div id="hub-view">
+            <div id="hub-view" class="view-section">
                 <div class="construction-text">SECTOR UNDER CONSTRUCTION</div>
                 <div class="spaceship-icon">🚀</div>
+            </div>
+
+            <!-- Admin View -->
+            <div id="admin-view" class="view-section">
+                
+                <!-- Ban User Section -->
+                <div class="admin-panel-card">
+                    <span class="admin-header">BANISHMENT PROTOCOLS (BAN USER + IP)</span>
+                    <div class="control-group">
+                        <select id="user-select">
+                            <option value="">Select Target...</option>
+                        </select>
+                        <button class="danger-btn" onclick="banUser()">EXECUTE BAN</button>
+                    </div>
+                </div>
+
+                <!-- Ban Word Section -->
+                <div class="admin-panel-card">
+                    <span class="admin-header">COMMUNICATION FILTERS (BAN WORD)</span>
+                    <div class="control-group">
+                        <input type="text" id="ban-word-input" placeholder="Enter word to censor...">
+                        <button class="danger-btn" onclick="banWord()">ADD TO BLACKLIST</button>
+                    </div>
+                </div>
+
+                <!-- Announcement Section -->
+                <div class="admin-panel-card">
+                    <span class="admin-header">GLOBAL BROADCAST SYSTEM</span>
+                    <div class="control-group">
+                        <input type="text" id="announce-input" placeholder="Enter announcement text...">
+                        <button class="warn-btn" onclick="sendAnnouncement()">BROADCAST</button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -303,9 +272,11 @@
         function attemptLogin() {
             const name = document.getElementById('username-input').value.trim();
             const pass = document.getElementById('password-input').value;
+            const errDiv = document.getElementById('login-error');
 
             if(!name) {
-                alert("Identity Required");
+                errDiv.innerText = "Identity Required";
+                errDiv.style.display = 'block';
                 return;
             }
 
@@ -319,6 +290,26 @@
             
             const statusDiv = document.getElementById('user-status');
             statusDiv.innerHTML = `${myData.name} <span class="role-${myData.role}">[${myData.role}]</span>`;
+
+            // Show Admin Tab if applicable
+            if(myData.role === 'Admin' || myData.role === 'Owner') {
+                document.getElementById('admin-tab').style.display = 'block';
+            }
+        });
+
+        socket.on('loginError', (msg) => {
+            const errDiv = document.getElementById('login-error');
+            errDiv.innerText = msg;
+            errDiv.style.display = 'block';
+        });
+
+        socket.on('banAlert', (msg) => {
+            document.body.innerHTML = `
+                <div style="height:100vh; display:flex; justify-content:center; align-items:center; background:black; color:red; flex-direction:column; font-family:'Orbitron'; text-align:center;">
+                    <h1 style="font-size:3rem;">⛔ ACCESS DENIED ⛔</h1>
+                    <h2 style="color:white;">${msg}</h2>
+                </div>
+            `;
         });
 
         // --- Chat Logic ---
@@ -330,8 +321,6 @@
                 input.value = '';
             }
         }
-
-        // Send on Enter key
         document.getElementById('msg-input').addEventListener('keypress', (e) => {
             if(e.key === 'Enter') sendMessage();
         });
@@ -340,16 +329,13 @@
             const container = document.getElementById('messages-container');
             const row = document.createElement('div');
             
-            // Determine alignment
             const isMe = myData && msg.user === myData.name;
             row.className = `message-row ${isMe ? 'mine' : 'theirs'}`;
 
-            // Meta
             const meta = document.createElement('div');
             meta.className = 'msg-meta';
             meta.innerHTML = `<span class="role-${msg.role}">${msg.user}</span> • ${msg.timestamp}`;
 
-            // Bubble
             const bubble = document.createElement('div');
             bubble.className = 'msg-bubble';
             bubble.innerText = msg.text;
@@ -357,107 +343,124 @@
             row.appendChild(meta);
             row.appendChild(bubble);
             container.appendChild(row);
-
-            // Auto scroll
             container.scrollTop = container.scrollHeight;
         });
 
-        // --- Navigation ---
-        window.switchTab = function(tab) {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+        // --- Admin Logic ---
+        socket.on('userList', (users) => {
+            const select = document.getElementById('user-select');
+            // Save current selection
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">Select Target...</option>';
+            
+            users.forEach(u => {
+                // Don't let users ban themselves or other high roles if you want strict hierarchy (optional)
+                const opt = document.createElement('option');
+                opt.value = u.name;
+                opt.innerText = `${u.name} [${u.role}]`;
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+        });
 
-            if(tab === 'chat') {
-                document.getElementById('chat-view').style.display = 'flex';
-                document.getElementById('hub-view').style.display = 'none';
-            } else {
-                document.getElementById('chat-view').style.display = 'none';
-                document.getElementById('hub-view').style.display = 'flex';
+        function banUser() {
+            const targetName = document.getElementById('user-select').value;
+            if(!targetName) return alert("Select a user first.");
+            if(confirm(`Are you sure you want to PERMANENTLY BAN ${targetName}?`)) {
+                socket.emit('adminAction', { type: 'ban_user', targetName: targetName });
             }
         }
 
-        // --- "No Canvas" Particle System (SVG) ---
+        function banWord() {
+            const word = document.getElementById('ban-word-input').value.trim();
+            if(word) {
+                socket.emit('adminAction', { type: 'ban_word', word: word });
+                document.getElementById('ban-word-input').value = '';
+                alert(`"${word}" has been blacklisted.`);
+            }
+        }
+
+        function sendAnnouncement() {
+            const text = document.getElementById('announce-input').value.trim();
+            if(text) {
+                socket.emit('adminAction', { type: 'announce', text: text });
+                document.getElementById('announce-input').value = '';
+            }
+        }
+
+        socket.on('announcement', (data) => {
+            document.getElementById('announce-text').innerText = data.text;
+            document.getElementById('announce-sender').innerText = `Broadcast by: ${data.sender}`;
+            document.getElementById('announcement-overlay').style.display = 'flex';
+        });
+
+        // --- Navigation ---
+        window.switchTab = function(tabName) {
+            // Update tabs
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            if(tabName === 'chat') document.querySelectorAll('.nav-tab')[0].classList.add('active');
+            if(tabName === 'hub') document.querySelectorAll('.nav-tab')[1].classList.add('active');
+            if(tabName === 'admin') document.getElementById('admin-tab').classList.add('active');
+
+            // Update Views
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            if(tabName === 'chat') document.getElementById('chat-view').classList.add('active');
+            if(tabName === 'hub') document.getElementById('hub-view').classList.add('active');
+            if(tabName === 'admin') document.getElementById('admin-view').classList.add('active');
+        }
+
+        // --- Background Animation ---
         const svg = document.getElementById('space-network');
         let particles = [];
         const mouse = { x: -1000, y: -1000 };
-        const particleCount = 60; // Keep lower for DOM/SVG performance
+        const particleCount = 60; 
 
-        // Init Particles
         for(let i=0; i<particleCount; i++) {
             particles.push({
                 x: Math.random() * window.innerWidth,
                 y: Math.random() * window.innerHeight,
                 vx: (Math.random() - 0.5) * 1.5,
-                vy: (Math.random() - 0.5) * 1.5,
-                baseX: 0, 
-                baseY: 0
+                vy: (Math.random() - 0.5) * 1.5
             });
         }
 
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
-        });
+        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
 
         function animateSVG() {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            
-            // 1. Update Physics
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            let svgContent = '';
+
             particles.forEach(p => {
-                p.baseX = p.x;
-                p.baseY = p.y;
-                
-                // Move
-                p.x += p.vx;
-                p.y += p.vy;
+                p.x += p.vx; p.y += p.vy;
+                if(p.x < 0 || p.x > w) p.vx *= -1;
+                if(p.y < 0 || p.y > h) p.vy *= -1;
 
-                // Bounce
-                if(p.x < 0 || p.x > width) p.vx *= -1;
-                if(p.y < 0 || p.y > height) p.vy *= -1;
-
-                // Mouse Repulsion
                 const dx = mouse.x - p.x;
                 const dy = mouse.y - p.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                const maxDist = 200;
-
-                if(dist < maxDist) {
-                    const force = (maxDist - dist) / maxDist;
-                    const angle = Math.atan2(dy, dx);
-                    const moveX = Math.cos(angle) * force * 5;
-                    const moveY = Math.sin(angle) * force * 5;
-                    p.x -= moveX;
-                    p.y -= moveY;
+                if(dist < 200) {
+                    const force = (200 - dist) / 200;
+                    p.x -= (dx/dist) * force * 5;
+                    p.y -= (dy/dist) * force * 5;
                 }
             });
 
-            // 2. Build SVG Content String (Faster than creating DOM nodes individually per frame)
-            let svgContent = '';
-
-            // Draw Lines
             for(let i=0; i<particles.length; i++) {
                 for(let j=i+1; j<particles.length; j++) {
                     const dx = particles[i].x - particles[j].x;
                     const dy = particles[i].y - particles[j].y;
                     const dist = Math.sqrt(dx*dx + dy*dy);
-
                     if(dist < 150) {
-                        const opacity = 1 - (dist / 150);
-                        svgContent += `<line x1="${particles[i].x}" y1="${particles[i].y}" x2="${particles[j].x}" y2="${particles[j].y}" stroke="rgba(0, 255, 255, ${opacity * 0.5})" stroke-width="1" />`;
+                        const op = 1 - (dist / 150);
+                        svgContent += `<line x1="${particles[i].x}" y1="${particles[i].y}" x2="${particles[j].x}" y2="${particles[j].y}" stroke="rgba(0, 255, 255, ${op * 0.5})" stroke-width="1" />`;
                     }
                 }
+                svgContent += `<circle cx="${particles[i].x}" cy="${particles[i].y}" r="2" class="star-dot" />`;
             }
-
-            // Draw Dots
-            particles.forEach(p => {
-                svgContent += `<circle cx="${p.x}" cy="${p.y}" r="2" class="star-dot" />`;
-            });
-
             svg.innerHTML = svgContent;
             requestAnimationFrame(animateSVG);
         }
-
         animateSVG();
 
     </script>
