@@ -8,15 +8,8 @@ const server = http.createServer(app);
 
 // --- 1. "Nonexistent" Throttling Settings ---
 const io = new Server(server, {
-    // Wait 1 HOUR before assuming the user is dead. 
-    // This allows background tabs to sleep for a long time without being kicked.
     pingTimeout: 3600000, 
-    
-    // Send a small packet every 25s to keep the hosting provider (Render) happy.
-    // Render/Heroku kill connections that are silent for >60s, so this MUST be <60s.
     pingInterval: 25000, 
-    
-    // Allow users to recover their state (chat history/session) for up to 1 hour
     connectionStateRecovery: {
         maxDisconnectionDuration: 3600000,
         skipMiddlewares: true,
@@ -34,7 +27,6 @@ const bannedIPs = new Set();
 const bannedUsernames = new Set();
 let bannedWords = ['spam', 'virus', 'badword']; 
 
-// Helper: Get Client IP (handles proxies like Render/Heroku)
 function getIp(socket) {
     return socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
 }
@@ -66,7 +58,7 @@ io.on('connection', (socket) => {
     } else if (data.password === 'admin123') {
         role = 'Admin';
     } else if (data.password !== '') {
-        role = 'User'; // Wrong password defaults to user
+        role = 'User'; 
     }
 
     users[socket.id] = {
@@ -96,7 +88,6 @@ io.on('connection', (socket) => {
     const user = users[socket.id];
     if (user) {
         let filteredText = msg;
-        // Word Filter
         bannedWords.forEach(word => {
             const safeWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`\\b${safeWord}\\b`, 'gi');
@@ -125,7 +116,6 @@ io.on('connection', (socket) => {
   // A. Request
   socket.on('dmRequest', (targetSocketId) => {
       const sender = users[socket.id];
-      // Only send if target exists
       if (users[targetSocketId]) {
           io.to(targetSocketId).emit('incomingDMRequest', { 
               fromId: socket.id, 
@@ -157,10 +147,15 @@ io.on('connection', (socket) => {
   socket.on('privateMessage', ({ to, text }) => {
       const sender = users[socket.id];
       if (users[to] && sender) {
-        // Send to target
         io.to(to).emit('privateMsgReceive', { fromId: socket.id, text: text, name: sender.name });
-        // Send back to sender (so they see it in their bubble)
         socket.emit('privateMsgReceive', { fromId: socket.id, text: text, name: sender.name });
+      }
+  });
+
+  // E. Close DM (New)
+  socket.on('closeDM', (targetSocketId) => {
+      if (users[targetSocketId]) {
+          io.to(targetSocketId).emit('dmClosed', { withId: socket.id });
       }
   });
 
@@ -211,7 +206,6 @@ io.on('connection', (socket) => {
               });
               break;
       }
-      // Refresh list to remove banned user
       io.emit('userList', Object.values(users));
   });
 
