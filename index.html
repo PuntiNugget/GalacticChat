@@ -70,7 +70,6 @@
         
         .star-dot { 
             fill: #00ffff;
-            /* Simple CSS animation instead of JS Loop */
             animation: twinkle 4s infinite alternate ease-in-out;
         }
         .constellation-line { 
@@ -216,7 +215,18 @@
         .input-area { padding: 20px; background: rgba(0, 0, 0, 0.5); display: flex; gap: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
         .input-area input { flex: 1; }
 
-        /* DM Styles */
+        /* DM Styles (NEW MULTI-DM) */
+        #dm-view { display:none; height:100%; width:100%; flex-direction:row; }
+        #dm-sidebar { width: 220px; background: rgba(20, 0, 30, 0.8); border-right: 1px solid #d600ff; display: flex; flex-direction: column; }
+        #dm-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+        
+        .dm-nav-item { padding: 15px; color: #ccc; cursor: pointer; border-bottom: 1px solid rgba(214, 0, 255, 0.2); transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .dm-nav-item:hover { background: rgba(214, 0, 255, 0.1); color: #fff; }
+        .dm-nav-item.active { background: rgba(214, 0, 255, 0.3); color: #fff; border-left: 3px solid #d600ff; }
+        .dm-nav-item i { color: #d600ff; margin-right: 10px; }
+        
+        .unread-dot { height: 8px; width: 8px; background-color: red; border-radius: 50%; display: none; box-shadow: 0 0 5px red; }
+
         .dm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; padding: 20px; }
         .dm-user-card { background: rgba(214, 0, 255, 0.05); border: 1px solid #d600ff; padding: 15px; border-radius: 5px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: space-between; }
         .dm-user-card:hover { background: #d600ff; color: black; box-shadow: 0 0 15px #d600ff; }
@@ -305,15 +315,11 @@
                         <div class="hub-header">
                             <span class="hub-title">DEEP SPACE HUB</span>
                             <div class="hub-controls">
-                                <!-- NEW BUTTONS ADDED HERE -->
                                 <button class="hub-app-btn" onclick="openHubApp('https://amp.nov.su')">
                                     <i class="fas fa-network-wired"></i> PROXY
                                 </button>
                                 <button class="hub-app-btn" onclick="openHubApp('https://spaceracer.onrender.com')">
                                     <i class="fas fa-gamepad"></i> STELLAR DRIFT
-                                </button>
-                                <button class="hub-app-btn" onclick="openHubApp('https://galactic-video.onrender.com/')">
-                                    <i class="fas fa-network-wired"></i> VIDEO
                                 </button>
                                 <button class="hub-app-btn" style="border-color: #ffaa00; color: #ffaa00;" onclick="closeHubApp()">
                                     <i class="fas fa-times-circle"></i> TERMINATE
@@ -329,27 +335,41 @@
                         </div>
                     </div>
 
-                    <!-- DM View -->
+                    <!-- DM View (New Multi-DM Layout) -->
                     <div id="dm-view" class="view-section">
-                        <!-- State 1: User List (Lobby) -->
-                        <div id="dm-lobby" style="padding:20px;">
-                            <div class="admin-header" style="color: #d600ff; border-color: #d600ff;">AVAILABLE TARGETS</div>
-                            <div id="dm-user-list" class="dm-grid"></div>
+                        <!-- Left: Sidebar List of DMs -->
+                        <div id="dm-sidebar">
+                            <div class="dm-nav-item" id="dm-nav-directory" onclick="switchDMView('directory')">
+                                <div><i class="fas fa-address-book"></i> Directory</div>
+                            </div>
+                            <!-- Active Chat Tabs Added Here -->
+                            <div id="dm-tabs-container"></div>
                         </div>
 
-                        <!-- State 2: Active Chat -->
-                        <div id="dm-active-chat" style="display:none; flex-direction:column; height:100%;">
-                            <div class="hub-header" style="background: rgba(214, 0, 255, 0.1); border-color: #d600ff;">
-                                <span id="dm-partner-name" class="hub-title" style="color: #d600ff;">TARGET LOCKED</span>
-                                <button class="hub-app-btn" onclick="exitDM()" style="border-color: #d600ff; color: #d600ff;">
-                                    <i class="fas fa-sign-out-alt"></i> DISCONNECT
-                                </button>
+                        <!-- Right: Content Area -->
+                        <div id="dm-content">
+                            
+                            <!-- Mode 1: Directory (Lobby) -->
+                            <div id="dm-directory" style="padding:20px; width:100%; height:100%; display:block;">
+                                <div class="admin-header" style="color: #d600ff; border-color: #d600ff;">AVAILABLE TARGETS</div>
+                                <div id="dm-user-list" class="dm-grid"></div>
                             </div>
-                            <div id="dm-messages" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px;"></div>
-                            <div class="input-area" style="border-top-color: #d600ff;">
-                                <input type="text" id="dm-input" placeholder="Encrypting transmission..." style="border-color: #555;">
-                                <button onclick="sendDM()" style="border-color: #d600ff; color: #d600ff;">SEND</button>
+
+                            <!-- Mode 2: Active Chat Interface -->
+                            <div id="dm-chat-interface" style="display:none; flex-direction:column; height:100%; width:100%;">
+                                <div class="hub-header" style="background: rgba(214, 0, 255, 0.1); border-color: #d600ff;">
+                                    <span id="dm-partner-name" class="hub-title" style="color: #d600ff;">TARGET LOCKED</span>
+                                    <button class="hub-app-btn" onclick="closeCurrentDM()" style="border-color: #d600ff; color: #d600ff;">
+                                        <i class="fas fa-times"></i> CLOSE
+                                    </button>
+                                </div>
+                                <div id="dm-messages" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px;"></div>
+                                <div class="input-area" style="border-top-color: #d600ff;">
+                                    <input type="text" id="dm-input" placeholder="Encrypting transmission..." style="border-color: #555;">
+                                    <button onclick="sendDM()" style="border-color: #d600ff; color: #d600ff;">SEND</button>
+                                </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -391,16 +411,13 @@
     <!-- Socket.io Client Library -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // --- Socket Init with Reconnection ---
-        const socket = io({
-            reconnection: true,
-            reconnectionAttempts: 20,
-            reconnectionDelay: 1000,
-            timeout: 20000
-        });
+        const socket = io({ reconnection: true, reconnectionAttempts: 20, reconnectionDelay: 1000, timeout: 20000 });
 
         let myData = null;
-        let currentDMPartnerId = null;
+        
+        // --- DM STATE MANAGEMENT ---
+        let activeDMs = {}; // Key: socketId, Value: { name: 'Bob', messages: [], unread: 0 }
+        let currentDMView = 'directory'; // 'directory' or socketId
         let incomingRequestFrom = null;
 
         // --- Notification Logic ---
@@ -413,10 +430,7 @@
             notif.className = `notif-toast ${type}`;
             notif.innerHTML = `${icon} <span>${text}</span>`;
             container.appendChild(notif);
-            setTimeout(() => {
-                notif.style.animation = 'fadeOut 0.5s ease-out forwards';
-                setTimeout(() => notif.remove(), 500);
-            }, 4000);
+            setTimeout(() => { notif.style.animation = 'fadeOut 0.5s ease-out forwards'; setTimeout(() => notif.remove(), 500); }, 4000);
         }
 
         // --- Auth Logic ---
@@ -431,70 +445,85 @@
             myData = data.user;
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('main-interface').style.display = 'flex';
-            const statusDiv = document.getElementById('user-status');
-            statusDiv.innerHTML = `${myData.name} <span class="role-${myData.role}">[${myData.role}]</span>`;
-            if(myData.role === 'Admin' || myData.role === 'Owner') {
-                document.getElementById('admin-tab').style.display = 'block';
-            }
+            document.getElementById('user-status').innerHTML = `${myData.name} <span class="role-${myData.role}">[${myData.role}]</span>`;
+            if(myData.role === 'Admin' || myData.role === 'Owner') document.getElementById('admin-tab').style.display = 'block';
         });
 
-        socket.on('loginError', (msg) => {
-            const errDiv = document.getElementById('login-error');
-            errDiv.innerText = msg;
-            errDiv.style.display = 'block';
-        });
+        socket.on('loginError', (msg) => { document.getElementById('login-error').innerText = msg; document.getElementById('login-error').style.display = 'block'; });
+        socket.on('banAlert', (msg) => { document.body.innerHTML = `<div style="height:100vh; display:flex; justify-content:center; align-items:center; background:black; color:red; flex-direction:column; font-family:'Orbitron'; text-align:center;"><h1 style="font-size:3rem;">⛔ ACCESS DENIED ⛔</h1><h2 style="color:white;">${msg}</h2></div>`; });
 
-        socket.on('banAlert', (msg) => {
-            document.body.innerHTML = `<div style="height:100vh; display:flex; justify-content:center; align-items:center; background:black; color:red; flex-direction:column; font-family:'Orbitron'; text-align:center;"><h1 style="font-size:3rem;">⛔ ACCESS DENIED ⛔</h1><h2 style="color:white;">${msg}</h2></div>`;
-        });
-
-        // --- Chat Logic ---
-        function sendMessage() {
-            const input = document.getElementById('msg-input');
-            const text = input.value.trim();
-            if(text) { socket.emit('chatMessage', text); input.value = ''; }
-        }
+        // --- Global Chat Logic ---
+        function sendMessage() { const input = document.getElementById('msg-input'); const text = input.value.trim(); if(text) { socket.emit('chatMessage', text); input.value = ''; } }
         document.getElementById('msg-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
 
         socket.on('message', (msg) => {
             const container = document.getElementById('messages-container');
             const row = document.createElement('div');
-            const isMe = myData && msg.user === myData.name;
-            row.className = `message-row ${isMe ? 'mine' : 'theirs'}`;
-            const meta = document.createElement('div');
-            meta.className = 'msg-meta';
-            meta.innerHTML = `<span class="role-${msg.role}">${msg.user}</span> • ${msg.timestamp}`;
-            const bubble = document.createElement('div');
-            bubble.className = 'msg-bubble';
-            bubble.innerText = msg.text;
-            row.appendChild(meta); row.appendChild(bubble);
+            row.className = `message-row ${myData && msg.user === myData.name ? 'mine' : 'theirs'}`;
+            row.innerHTML = `<div class="msg-meta"><span class="role-${msg.role}">${msg.user}</span> • ${msg.timestamp}</div><div class="msg-bubble">${msg.text}</div>`;
             container.appendChild(row); container.scrollTop = container.scrollHeight;
-
             if (msg.role === 'System') showNotification(msg.text, 'warning');
         });
 
-        // --- Reconnection Logic ---
-        socket.on('disconnect', (reason) => {
-            if (reason === "io server disconnect") socket.connect();
-            else showNotification("SIGNAL LOST. ATTEMPTING RECONNECT...", "danger");
-        });
-        socket.on('connect', () => {
-            if(myData) showNotification("CONNECTION RESTORED", "info");
-        });
+        // --- DM SYSTEM (MULTI-CHAT) ---
 
-        // --- Hub Logic ---
-        function openHubApp(url) {
-            const frame = document.getElementById('hub-iframe');
-            const overlay = document.getElementById('hub-overlay-msg');
-            frame.src = url; frame.style.display = 'block'; overlay.style.display = 'none';
-        }
-        function closeHubApp() {
-            const frame = document.getElementById('hub-iframe');
-            const overlay = document.getElementById('hub-overlay-msg');
-            frame.src = 'about:blank'; frame.style.display = 'none'; overlay.style.display = 'block';
+        // 1. Rendering the Sidebar Tabs
+        function renderDMTabs() {
+            const container = document.getElementById('dm-tabs-container');
+            container.innerHTML = '';
+            
+            Object.keys(activeDMs).forEach(id => {
+                const dm = activeDMs[id];
+                const item = document.createElement('div');
+                item.className = `dm-nav-item ${currentDMView === id ? 'active' : ''}`;
+                item.onclick = () => switchDMView(id);
+                
+                const unreadDot = dm.unread > 0 ? `<div class="unread-dot" style="display:block"></div>` : '';
+                
+                item.innerHTML = `<div><i class="fas fa-user-secret"></i> ${dm.name}</div>${unreadDot}`;
+                container.appendChild(item);
+            });
+            
+            // Highlight Directory if active
+            const dirBtn = document.getElementById('dm-nav-directory');
+            if(currentDMView === 'directory') dirBtn.classList.add('active');
+            else dirBtn.classList.remove('active');
         }
 
-        // --- DM System ---
+        // 2. Switching Views (Directory vs Chat)
+        function switchDMView(viewId) {
+            currentDMView = viewId;
+            renderDMTabs(); // Update highlights
+
+            if (viewId === 'directory') {
+                document.getElementById('dm-directory').style.display = 'block';
+                document.getElementById('dm-chat-interface').style.display = 'none';
+            } else {
+                // Showing a specific chat
+                document.getElementById('dm-directory').style.display = 'none';
+                document.getElementById('dm-chat-interface').style.display = 'flex';
+                
+                const dm = activeDMs[viewId];
+                document.getElementById('dm-partner-name').innerText = `LINKED: ${dm.name}`;
+                
+                // Render Chat History
+                const container = document.getElementById('dm-messages');
+                container.innerHTML = '';
+                dm.messages.forEach(msg => {
+                    const row = document.createElement('div');
+                    row.className = `message-row ${msg.fromMe ? 'mine' : 'theirs'}`;
+                    row.innerHTML = `<div class="msg-meta" style="color:#d600ff;">${msg.name}</div><div class="msg-bubble dm-private">${msg.text}</div>`;
+                    container.appendChild(row);
+                });
+                container.scrollTop = container.scrollHeight;
+                
+                // Clear Unread
+                dm.unread = 0;
+                renderDMTabs();
+            }
+        }
+
+        // 3. Update Directory List
         function updateDMLobby(users) {
             const list = document.getElementById('dm-user-list');
             if(!list) return;
@@ -508,104 +537,146 @@
                 list.appendChild(card);
             });
         }
+
+        // 4. Request / Accept Logic
         function requestDM(targetId) {
-            showNotification("Requesting Secure Link...", "warning");
-            socket.emit('dmRequest', targetId);
+            if (activeDMs[targetId]) {
+                switchDMView(targetId); // Already open
+            } else {
+                showNotification("Requesting Secure Link...", "warning");
+                socket.emit('dmRequest', targetId);
+            }
         }
+        
         socket.on('incomingDMRequest', (data) => {
             incomingRequestFrom = data.fromId;
             document.getElementById('dm-req-text').innerText = `${data.name} is requesting a secure line.`;
             document.getElementById('dm-request-modal').style.display = 'block';
         });
+
         function acceptDM() { socket.emit('dmAccepted', incomingRequestFrom); document.getElementById('dm-request-modal').style.display = 'none'; }
         function rejectDM() { socket.emit('dmRejected', incomingRequestFrom); document.getElementById('dm-request-modal').style.display = 'none'; }
 
         socket.on('dmStart', (data) => {
-            currentDMPartnerId = data.withId;
+            // Add to activeDMs if not exists
+            if (!activeDMs[data.withId]) {
+                activeDMs[data.withId] = { name: data.name, messages: [], unread: 0 };
+            }
             switchTab('dm');
-            document.getElementById('dm-lobby').style.display = 'none';
-            document.getElementById('dm-active-chat').style.display = 'flex';
-            document.getElementById('dm-partner-name').innerText = `LINKED: ${data.name}`;
-            document.getElementById('dm-messages').innerHTML = '';
-            showNotification("SECURE CHANNEL ESTABLISHED", "warning");
+            switchDMView(data.withId);
+            showNotification(`LINK ESTABLISHED: ${data.name}`, "warning");
         });
 
-        function exitDM() {
-            currentDMPartnerId = null;
-            document.getElementById('dm-active-chat').style.display = 'none';
-            document.getElementById('dm-lobby').style.display = 'grid';
-        }
-
+        // 5. Messaging Logic
         function sendDM() {
             const input = document.getElementById('dm-input');
             const text = input.value.trim();
-            if(text && currentDMPartnerId) { socket.emit('privateMessage', { to: currentDMPartnerId, text: text }); input.value = ''; }
+            // Send only if currently viewing a valid chat ID
+            if(text && currentDMView !== 'directory' && activeDMs[currentDMView]) {
+                socket.emit('privateMessage', { to: currentDMView, text: text });
+                input.value = '';
+            }
         }
         document.getElementById('dm-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendDM(); });
 
         socket.on('privateMsgReceive', (msg) => {
-            const container = document.getElementById('dm-messages');
-            const row = document.createElement('div');
-            const isMe = msg.fromId === socket.id;
-            row.className = `message-row ${isMe ? 'mine' : 'theirs'}`;
-            const meta = document.createElement('div');
-            meta.className = 'msg-meta';
-            meta.innerHTML = `<span style="color: #d600ff;">${msg.name}</span>`;
-            const bubble = document.createElement('div');
-            bubble.className = 'msg-bubble dm-private';
-            bubble.innerText = msg.text;
-            row.appendChild(meta); row.appendChild(bubble);
-            container.appendChild(row); container.scrollTop = container.scrollHeight;
+            // Determine partner ID (if I sent it, partner is 'to', if I received, partner is 'fromId')
+            // Actually, server sends 'fromId'. If fromId == me, I need to know who I sent it to?
+            // Wait, server echoes back 'privateMsgReceive' with 'fromId' = my Socket ID.
+            
+            let partnerId = msg.fromId;
+            let fromMe = false;
+
+            if (msg.fromId === socket.id) {
+                fromMe = true;
+                // If I sent it, I know who I am looking at right now.
+                // Assuming I can only send to 'currentDMView'.
+                if(currentDMView !== 'directory') partnerId = currentDMView;
+            }
+
+            // If chat doesn't exist (shouldn't happen logic-wise but safe check)
+            if (!activeDMs[partnerId]) return; 
+
+            // Add to history
+            activeDMs[partnerId].messages.push({
+                text: msg.text,
+                name: msg.name,
+                fromMe: fromMe
+            });
+
+            // Update UI
+            if (currentDMView === partnerId) {
+                // If viewing this chat, append immediately
+                const container = document.getElementById('dm-messages');
+                const row = document.createElement('div');
+                row.className = `message-row ${fromMe ? 'mine' : 'theirs'}`;
+                row.innerHTML = `<div class="msg-meta" style="color:#d600ff;">${msg.name}</div><div class="msg-bubble dm-private">${msg.text}</div>`;
+                container.appendChild(row);
+                container.scrollTop = container.scrollHeight;
+            } else {
+                // If not viewing, increment unread
+                activeDMs[partnerId].unread++;
+                renderDMTabs();
+                showNotification(`New Secure Message from ${activeDMs[partnerId].name}`, 'warning');
+            }
         });
 
-        // --- User List & Admin ---
+        // 6. Close DM Logic
+        function closeCurrentDM() {
+            if (currentDMView !== 'directory') {
+                const target = currentDMView;
+                socket.emit('closeDM', target);
+                delete activeDMs[target];
+                switchDMView('directory');
+            }
+        }
+        
+        socket.on('dmClosed', (data) => {
+            if (activeDMs[data.withId]) {
+                showNotification(`LINK TERMINATED BY ${activeDMs[data.withId].name}`, "danger");
+                delete activeDMs[data.withId];
+                if (currentDMView === data.withId) switchDMView('directory');
+                else renderDMTabs();
+            }
+        });
+
+        // --- Standard Logic & Init ---
+        socket.on('disconnect', (reason) => { if(reason === "io server disconnect") socket.connect(); });
+
+        function openHubApp(url) { document.getElementById('hub-iframe').src = url; document.getElementById('hub-iframe').style.display='block'; document.getElementById('hub-overlay-msg').style.display='none'; }
+        function closeHubApp() { document.getElementById('hub-iframe').src='about:blank'; document.getElementById('hub-iframe').style.display='none'; document.getElementById('hub-overlay-msg').style.display='block'; }
+
         socket.on('userList', (users) => {
+            // Update Admin Select
             const select = document.getElementById('user-select');
             if(select) {
                 const currentVal = select.value;
                 select.innerHTML = '<option value="">Select Target...</option>';
-                users.forEach(u => {
-                    const opt = document.createElement('option');
-                    opt.value = u.name; opt.innerText = `${u.name} [${u.role}]`;
-                    select.appendChild(opt);
-                });
+                users.forEach(u => { const opt = document.createElement('option'); opt.value = u.name; opt.innerText = `${u.name} [${u.role}]`; select.appendChild(opt); });
                 select.value = currentVal;
             }
+            // Update Active Agents
             const listContainer = document.getElementById('user-list');
             listContainer.innerHTML = '';
             users.forEach(u => {
                 const div = document.createElement('div');
                 div.className = 'user-item';
-                let statusClass = 'status-chat';
-                let statusText = u.status || 'In Comms';
+                let statusClass = 'status-chat'; let statusText = u.status || 'In Comms';
                 if(statusText.includes('Hub')) statusClass = 'status-hub';
                 if(statusText.includes('Deck')) statusClass = 'status-admin';
                 if(statusText.includes('Secure')) statusClass = 'status-dm';
                 div.innerHTML = `<div class="status-dot ${statusClass}"></div><div class="user-info-group"><span style="font-weight:bold; color:#e0e0e0;">${u.name}</span><span class="user-status-text">${statusText}</span></div>`;
                 listContainer.appendChild(div);
             });
+            // Update DM Lobby
             updateDMLobby(users);
         });
 
-        function banUser() {
-            const targetName = document.getElementById('user-select').value;
-            if(targetName && confirm(`BAN ${targetName}?`)) socket.emit('adminAction', { type: 'ban_user', targetName: targetName });
-        }
-        function banWord() {
-            const word = document.getElementById('ban-word-input').value.trim();
-            if(word) { socket.emit('adminAction', { type: 'ban_word', word: word }); document.getElementById('ban-word-input').value = ''; }
-        }
-        function sendAnnouncement() {
-            const text = document.getElementById('announce-input').value.trim();
-            if(text) { socket.emit('adminAction', { type: 'announce', text: text }); document.getElementById('announce-input').value = ''; }
-        }
-        socket.on('announcement', (data) => {
-            document.getElementById('announce-text').innerText = data.text;
-            document.getElementById('announce-sender').innerText = `Broadcast: ${data.sender}`;
-            document.getElementById('announcement-overlay').style.display = 'flex';
-        });
+        function banUser() { const t = document.getElementById('user-select').value; if(t && confirm(`BAN ${t}?`)) socket.emit('adminAction', { type: 'ban_user', targetName: t }); }
+        function banWord() { const w = document.getElementById('ban-word-input').value; if(w) { socket.emit('adminAction', { type: 'ban_word', word: w }); document.getElementById('ban-word-input').value = ''; } }
+        function sendAnnouncement() { const t = document.getElementById('announce-input').value; if(t) { socket.emit('adminAction', { type: 'announce', text: t }); document.getElementById('announce-input').value = ''; } }
+        socket.on('announcement', (data) => { document.getElementById('announce-text').innerText = data.text; document.getElementById('announce-sender').innerText = `Broadcast: ${data.sender}`; document.getElementById('announcement-overlay').style.display = 'flex'; });
 
-        // --- Navigation ---
         window.switchTab = function(tabName) {
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             let status = 'Unknown';
@@ -619,50 +690,30 @@
             if(tabName === 'hub') document.getElementById('hub-view').classList.add('active');
             if(tabName === 'dm') document.getElementById('dm-view').classList.add('active');
             if(tabName === 'admin') document.getElementById('admin-view').classList.add('active');
+            
+            // Special layout for DM
+            if(tabName === 'dm') { document.getElementById('dm-view').style.display = 'flex'; }
 
             if(socket && myData) socket.emit('updateStatus', status);
         }
 
-        // --- SVG Background (Static Generation) ---
         const svg = document.getElementById('space-network');
-        
         function generateSpaceBackground() {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
+            const w = window.innerWidth, h = window.innerHeight;
             let particles = [];
-            const particleCount = 80; 
-
-            // Create particles
-            for(let i=0; i<particleCount; i++) {
-                particles.push({
-                    x: Math.random() * w,
-                    y: Math.random() * h
-                });
-            }
-
+            for(let i=0; i<80; i++) particles.push({ x: Math.random() * w, y: Math.random() * h });
             let svgContent = '';
-            
-            // Draw connections
             for(let i=0; i<particles.length; i++) {
                 for(let j=i+1; j<particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    
-                    if(dist < 150) {
-                        const op = (1 - (dist / 150)) * 0.5; 
-                        svgContent += `<line x1="${particles[i].x}" y1="${particles[i].y}" x2="${particles[j].x}" y2="${particles[j].y}" stroke="rgba(0, 255, 255, ${op})" stroke-width="1" />`;
-                    }
+                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y, dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < 150) svgContent += `<line x1="${particles[i].x}" y1="${particles[i].y}" x2="${particles[j].x}" y2="${particles[j].y}" stroke="rgba(0, 255, 255, ${ (1-(dist/150))*0.5 })" stroke-width="1" />`;
                 }
-                // Draw dots
                 svgContent += `<circle cx="${particles[i].x}" cy="${particles[i].y}" r="2" class="star-dot" />`;
             }
-            
             svg.innerHTML = svgContent;
         }
-
         generateSpaceBackground();
-        window.addEventListener('resize', () => generateSpaceBackground());
+        window.addEventListener('resize', generateSpaceBackground);
     </script>
 </body>
 </html>
