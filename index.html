@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic Chat Node</title>
+    <title>Galactic Chat</title>
     <!-- Added FontAwesome for Hub Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -310,10 +310,52 @@
         .admin-header { color: #ff4444; font-family: 'Orbitron'; border-bottom: 1px solid #ff4444; padding-bottom: 10px; margin-bottom: 15px; display: block; }
         .control-group { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; }
 
+            /* --- Notification System --- */
+#notification-area {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000; /* Above everything */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none; /* Let clicks pass through empty space */
+}
+
+.notif-toast {
+    background: rgba(0, 10, 20, 0.95);
+    border: 1px solid #00ffff;
+    border-left: 4px solid #00ffff;
+    color: #fff;
+    padding: 15px 20px;
+    min-width: 250px;
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    font-family: 'Orbitron';
+    font-size: 0.8rem;
+    animation: slideIn 0.3s ease-out forwards;
+    pointer-events: auto; 
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.notif-toast.warning { border-color: #ffaa00; border-left-color: #ffaa00; color: #ffaa00; }
+.notif-toast.danger { border-color: #ff4444; border-left-color: #ff4444; color: #ff4444; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
+
     </style>
 </head>
 <body>
-
+    <div id="notification-area"></div>
     <svg id="space-network"></svg>
 
     <!-- Announcement Overlay -->
@@ -482,6 +524,32 @@
             socket.emit('join', { name: name, password: pass });
         }
 
+        // --- Notification Logic ---
+function showNotification(text, type = 'info') {
+    const container = document.getElementById('notification-area');
+    const notif = document.createElement('div');
+    
+    // Choose Icon based on type
+    let icon = '<i class="fas fa-info-circle"></i>';
+    if(type === 'warning') icon = '<i class="fas fa-exclamation-triangle"></i>';
+    if(type === 'danger') icon = '<i class="fas fa-radiation-alt"></i>';
+
+    notif.className = `notif-toast ${type}`;
+    notif.innerHTML = `${icon} <span>${text}</span>`;
+    
+    container.appendChild(notif);
+
+    // Audio beep (optional - simple sine wave)
+    // Uncomment the next line if you want sound:
+    // playBeep(); 
+
+    // Remove after 4 seconds
+    setTimeout(() => {
+        notif.style.animation = 'fadeOut 0.5s ease-out forwards';
+        setTimeout(() => notif.remove(), 500);
+    }, 4000);
+}
+
         socket.on('loginSuccess', (data) => {
             myData = data.user;
             document.getElementById('login-modal').style.display = 'none';
@@ -503,6 +571,7 @@
         });
 
         socket.on('banAlert', (msg) => {
+            showNotification(msg, 'danger');
             document.body.innerHTML = `
                 <div style="height:100vh; display:flex; justify-content:center; align-items:center; background:black; color:red; flex-direction:column; font-family:'Orbitron'; text-align:center;">
                     <h1 style="font-size:3rem;">⛔ ACCESS DENIED ⛔</h1>
@@ -510,7 +579,6 @@
                 </div>
             `;
         });
-
         // --- Chat Logic ---
         function sendMessage() {
             const input = document.getElementById('msg-input');
@@ -543,6 +611,10 @@
             row.appendChild(bubble);
             container.appendChild(row);
             container.scrollTop = container.scrollHeight;
+            // ADD THIS: If it's a System message, show a notification
+    if (msg.role === 'System') {
+        showNotification(msg.text, 'warning');
+    }
         });
 
         // --- User List & Status Logic ---
