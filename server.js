@@ -6,13 +6,19 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
-// --- 1. Robust Connection Settings ---
-// Increased timeouts to prevent random disconnects when tabbing out
+// --- 1. "Nonexistent" Throttling Settings ---
 const io = new Server(server, {
-    pingTimeout: 60000,           // Wait 60s before assuming dead
-    pingInterval: 25000,          // Send heartbeat every 25s
+    // Wait 1 HOUR before assuming the user is dead. 
+    // This allows background tabs to sleep for a long time without being kicked.
+    pingTimeout: 3600000, 
+    
+    // Send a small packet every 25s to keep the hosting provider (Render) happy.
+    // Render/Heroku kill connections that are silent for >60s, so this MUST be <60s.
+    pingInterval: 25000, 
+    
+    // Allow users to recover their state (chat history/session) for up to 1 hour
     connectionStateRecovery: {
-        maxDisconnectionDuration: 2 * 60 * 1000, // 2 mins recovery time
+        maxDisconnectionDuration: 3600000,
         skipMiddlewares: true,
     }
 });
